@@ -1,0 +1,8 @@
+---
+  - hosts: infra-core
+    vars_files:
+    - 'group_vars/secrets.yaml'
+    roles:
+      - role: ironicbadger.figurine
+      - role: ironicbadger.docker-compose-generator
+        tags: compose
