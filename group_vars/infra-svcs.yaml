@@ -1,0 +1,5 @@
+# ironicbadger.figurine
+figurine_name: bf-infra-svcs
+
+# docker-compose-generator expects services/<hostname>; inventory uses FQDN
+docker_compose_hostname: infra-svcs
