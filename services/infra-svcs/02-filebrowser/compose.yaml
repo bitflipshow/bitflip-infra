@@ -1,0 +1,78 @@
+configs:
+  files-ts-serve:
+    content: |
+      {"TCP":{"443":{"HTTPS":true}},
+      "Web":{"$${TS_CERT_DOMAIN}:443":
+          {"Handlers":{"/":
+          {"Proxy":"http://127.0.0.1:4180"}}}},
+      "AllowFunnel":{"$${TS_CERT_DOMAIN}:443":false}}
+
+services:
+  files-ts:
+    image: tailscale/tailscale:latest
+    container_name: files-ts
+    hostname: files
+    environment:
+      - TS_AUTHKEY={{ vault_ts_oauth_client_secret | replace('$', '$$') }}
+      - TS_EXTRA_ARGS=--advertise-tags=tag:server
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_SERVE_CONFIG=/config/serve-config.json
+      - TS_USERSPACE=false
+    volumes:
+      - "{{ filebrowser_appdata_path }}/ts-state:/var/lib/tailscale"
+    configs:
+      - source: files-ts-serve
+        target: /config/serve-config.json
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    restart: unless-stopped
+
+  filebrowser:
+    image: filebrowser/filebrowser:v2.62.1
+    container_name: filebrowser
+    command:
+      - --database
+      - /database/filebrowser.db
+      - --root
+      - /srv
+      - --address
+      - 0.0.0.0
+      - --port
+      - "8080"
+      - --username
+      - admin
+      - --password
+      - "{{ vault_filebrowser_bootstrap_password | replace('$', '$$') }}"
+      - --noauth
+    volumes:
+      - "{{ filebrowser_data_path }}:/srv"
+      - "{{ filebrowser_appdata_path }}/database:/database"
+    depends_on:
+      - files-ts
+    network_mode: service:files-ts
+    restart: unless-stopped
+
+  filebrowser-auth:
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.15.0
+    container_name: filebrowser-auth
+    environment:
+      - OAUTH2_PROXY_PROVIDER=oidc
+      - OAUTH2_PROXY_HTTP_ADDRESS=0.0.0.0:4180
+      - OAUTH2_PROXY_UPSTREAMS=http://127.0.0.1:8080/
+      - OAUTH2_PROXY_REDIRECT_URL=https://{{ filebrowser_domain }}/oauth2/callback
+      - OAUTH2_PROXY_OIDC_ISSUER_URL=https://idp.komodo-gecko.ts.net
+      - OAUTH2_PROXY_SCOPE=openid email profile
+      - OAUTH2_PROXY_CLIENT_ID={{ vault_filebrowser_oidc_client_id }}
+      - OAUTH2_PROXY_CLIENT_SECRET={{ vault_filebrowser_oidc_client_secret | replace('$', '$$') }}
+      - OAUTH2_PROXY_COOKIE_SECRET={{ vault_filebrowser_cookie_secret | replace('$', '$$') }}
+      - OAUTH2_PROXY_EMAIL_DOMAINS=*
+      - OAUTH2_PROXY_SKIP_PROVIDER_BUTTON=true
+      - OAUTH2_PROXY_REVERSE_PROXY=true
+      - OAUTH2_PROXY_PASS_USER_HEADERS=true
+      - OAUTH2_PROXY_INSECURE_OIDC_ALLOW_UNVERIFIED_EMAIL=true
+    depends_on:
+      - filebrowser
+    network_mode: service:files-ts
+    restart: unless-stopped
