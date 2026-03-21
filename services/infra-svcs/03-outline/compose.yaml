@@ -1,0 +1,90 @@
+networks:
+  outline-net:
+
+configs:
+  outline-ts-serve:
+    content: |
+      {"TCP":{"443":{"HTTPS":true}},
+      "Web":{"$${TS_CERT_DOMAIN}:443":
+          {"Handlers":{"/":
+          {"Proxy":"http://127.0.0.1:3000"}}}},
+      "AllowFunnel":{"$${TS_CERT_DOMAIN}:443":false}}
+
+services:
+  outline-ts:
+    image: tailscale/tailscale:latest
+    container_name: outline-ts
+    hostname: outline
+    environment:
+      - TS_AUTHKEY={{ vault_ts_oauth_client_secret | replace('$', '$$') }}
+      - TS_EXTRA_ARGS=--advertise-tags=tag:server
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_SERVE_CONFIG=/config/serve-config.json
+      - TS_USERSPACE=false
+    volumes:
+      - "{{ outline_appdata_path }}/ts-state:/var/lib/tailscale"
+    configs:
+      - source: outline-ts-serve
+        target: /config/serve-config.json
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    restart: unless-stopped
+    networks:
+      - outline-net
+
+  outline:
+    image: outlinewiki/outline:1.6.1
+    container_name: outline
+    volumes:
+      - "{{ outline_appdata_path }}/data:/var/lib/outline/data"
+    environment:
+      - NODE_ENV=production
+      - SECRET_KEY={{ vault_outline_secret_key | replace('$', '$$') }}
+      - UTILS_SECRET={{ vault_outline_utils_secret | replace('$', '$$') }}
+      - URL=https://{{ outline_domain }}
+      - PORT=3000
+      - DATABASE_URL=postgres://outline:{{ vault_outline_db_password | replace('@', '%40') | replace(':', '%3A') | replace('/', '%2F') | replace('?', '%3F') | replace('#', '%23') }}@outline-db:5432/outline
+      - PGSSLMODE=disable
+      - REDIS_URL=redis://outline-redis:6379
+      - FILE_STORAGE=local
+      - FILE_STORAGE_LOCAL_ROOT_DIR=/var/lib/outline/data
+      - FILE_STORAGE_UPLOAD_MAX_SIZE=26214400
+      - OIDC_CLIENT_ID={{ vault_outline_oidc_client_id }}
+      - OIDC_CLIENT_SECRET={{ vault_outline_oidc_client_secret | replace('$', '$$') }}
+      - OIDC_AUTH_URI=https://idp.komodo-gecko.ts.net/authorize
+      - OIDC_TOKEN_URI=https://idp.komodo-gecko.ts.net/token
+      - OIDC_USERINFO_URI=https://idp.komodo-gecko.ts.net/userinfo
+      - OIDC_USERNAME_CLAIM=username
+      - OIDC_DISPLAY_NAME=TSIDP
+      - OIDC_SCOPES=openid email profile
+      - FORCE_HTTPS=false
+      - DEFAULT_LANGUAGE=en_US
+      - ENABLE_UPDATES=true
+    depends_on:
+      - outline-db
+      - outline-ts
+      - outline-redis
+    network_mode: service:outline-ts
+    restart: unless-stopped
+
+  outline-redis:
+    image: redis:8.6.1
+    container_name: outline-redis
+    restart: unless-stopped
+    networks:
+      - outline-net
+
+  outline-db:
+    image: pgautoupgrade/pgautoupgrade:18.3-alpine
+    container_name: outline-db
+    volumes:
+      - "{{ outline_appdata_path }}/postgres:/var/lib/postgresql/data"
+    environment:
+      - POSTGRES_USER=outline
+      - POSTGRES_PASSWORD={{ vault_outline_db_password | replace('$', '$$') }}
+      - POSTGRES_DB=outline
+    restart: unless-stopped
+    networks:
+      - outline-net

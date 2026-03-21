@@ -26,3 +26,7 @@ copyparty_tailnet_users:
 filebrowser_domain: files.komodo-gecko.ts.net
 filebrowser_appdata_path: /opt/appdata/filebrowser
 filebrowser_data_path: /mnt/bitflip/data
+
+# outline
+outline_domain: outline.komodo-gecko.ts.net
+outline_appdata_path: "{{ appdata_path }}/apps/outline"

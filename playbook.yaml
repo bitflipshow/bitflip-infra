@@ -15,6 +15,22 @@
     - role: ironicbadger.docker-compose-generator
       tags: compose
   tasks:
+    - name: Migrate legacy Outline appdata into managed appdata path
+      shell: |
+        set -eu
+        install -d -m 0755 "$(dirname "{{ outline_appdata_path }}")"
+        if [ -d /root/apps/outline ] && [ ! -e "{{ outline_appdata_path }}" ]; then
+          mv /root/apps/outline "{{ outline_appdata_path }}"
+          echo moved
+        fi
+      args:
+        executable: /bin/sh
+      register: outline_appdata_migration
+      changed_when: "'moved' in outline_appdata_migration.stdout"
+      when: outline_appdata_path is defined
+      tags:
+        - compose
+
     - name: Apply rendered compose stack
       command:
         argv:
