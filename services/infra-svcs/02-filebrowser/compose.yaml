@@ -32,6 +32,7 @@ services:
   filebrowser:
     image: filebrowser/filebrowser:v2.62.1
     container_name: filebrowser
+    user: "0:0"
     command:
       - --database
       - /database/filebrowser.db
