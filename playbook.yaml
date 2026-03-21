@@ -21,7 +21,7 @@
           - docker
           - compose
           - -f
-          - "{{ ansible_env.HOME }}/compose.yaml"
+          - "{{ docker_compose_generator_output_path }}/compose.yaml"
           - up
           - -d
           - --remove-orphans
