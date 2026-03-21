@@ -21,3 +21,19 @@ copyparty_tailnet_users:
     copyparty_user: fuzzymistborn
   - tailscale_login: ironicbadger@github
     copyparty_user: ironicbadger
+
+# seafile
+seafile_appdata_path: /opt/appdata/seafile
+seafile_domain: seafile.komodo-gecko.ts.net
+seafile_data_path: /mnt/bitflip/data
+seafile_admin_email: admin@komodo-gecko.ts.net
+seafile_time_zone: America/New_York
+seafile_oidc_provider: tsidp
+seafile_oidc_provider_domain: idp.komodo-gecko.ts.net
+seafile_oidc_scope:
+  - openid
+  - email
+  - profile
+seafile_oidc_authorization_url: https://idp.komodo-gecko.ts.net/authorize
+seafile_oidc_token_url: https://idp.komodo-gecko.ts.net/token
+seafile_oidc_userinfo_url: https://idp.komodo-gecko.ts.net/userinfo
