@@ -38,7 +38,7 @@ services:
     volumes:
       - "{{ appdata_path }}/apps/copyparty/config:/config:ro"
       # - "{{ copyparty_data_path }}:/w"
-      - /mnt/bitflip:/data
+      - /mnt/bitflip/data:/data
     depends_on:
       - copyparty-ts
     network_mode: service:copyparty-ts
