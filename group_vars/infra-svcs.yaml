@@ -12,3 +12,12 @@ appdata_path: /opt/appdata
 # copyparty
 copyparty_data_path: "{{ appdata_path }}/apps/copyparty/data"
 copyparty_permissions: rwmd
+copyparty_tailnet_users:
+  - tailscale_login: ndls-Stephen@github
+    copyparty_user: ndls-stephen
+  - tailscale_login: kodiak879@github
+    copyparty_user: kodiak879
+  - tailscale_login: FuzzyMistborn@github
+    copyparty_user: fuzzymistborn
+  - tailscale_login: ironicbadger@github
+    copyparty_user: ironicbadger
