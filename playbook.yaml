@@ -1,17 +1,38 @@
 ---
-  - hosts: infra-core
-    vars_files:
-    - 'group_vars/secrets.yaml'
-    roles:
-      - role: ironicbadger.figurine
-      - role: ironicbadger.docker-compose-generator
-        tags: compose
+- hosts: infra-core
+  vars_files:
+    - group_vars/secrets.yaml
+  roles:
+    - role: ironicbadger.figurine
+    - role: ironicbadger.docker-compose-generator
+      tags: compose
 
----
-  - hosts: infra-svcs
-    vars_files:
-    - 'group_vars/secrets.yaml'
-    roles:
-      - role: ironicbadger.figurine
-      - role: ironicbadger.docker-compose-generator
-        tags: compose
+- hosts: infra-svcs
+  vars_files:
+    - group_vars/secrets.yaml
+  roles:
+    - role: ironicbadger.figurine
+    - role: ironicbadger.docker-compose-generator
+      tags: compose
+  tasks:
+    - name: Apply rendered compose stack
+      command:
+        argv:
+          - docker
+          - compose
+          - -f
+          - "{{ ansible_env.HOME }}/compose.yaml"
+          - up
+          - -d
+          - --remove-orphans
+      register: infra_svcs_compose_apply
+      changed_when: >-
+        'Creating' in infra_svcs_compose_apply.stdout or
+        'Created' in infra_svcs_compose_apply.stdout or
+        'Recreating' in infra_svcs_compose_apply.stdout or
+        'Starting' in infra_svcs_compose_apply.stdout or
+        'Started' in infra_svcs_compose_apply.stdout or
+        'Removing' in infra_svcs_compose_apply.stdout
+      when: docker_compose_generator_deploy | default(false)
+      tags:
+        - compose

@@ -1,0 +1,44 @@
+configs:
+  copyparty-ts-serve:
+    content: |
+      {"TCP":{"443":{"HTTPS":true}},
+      "Web":{"$${TS_CERT_DOMAIN}:443":
+          {"Handlers":{"/":
+          {"Proxy":"http://127.0.0.1:3923"}}}},
+      "AllowFunnel":{"$${TS_CERT_DOMAIN}:443":false}}
+
+services:
+  copyparty-ts:
+    image: tailscale/tailscale:latest
+    container_name: copyparty-ts
+    hostname: copyparty
+    environment:
+      - TS_AUTHKEY={{ vault_ts_oauth_client_secret | replace('$', '$$') }}
+      - TS_EXTRA_ARGS=--advertise-tags=tag:server
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_SERVE_CONFIG=/config/serve-config.json
+      - TS_USERSPACE=false
+    volumes:
+      - "{{ appdata_path }}/apps/copyparty/ts-state:/var/lib/tailscale"
+    configs:
+      - source: copyparty-ts-serve
+        target: /config/serve-config.json
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    restart: unless-stopped
+
+  copyparty:
+    image: copyparty/ac:latest
+    container_name: copyparty
+    command:
+      - -c
+      - /config/copyparty.conf
+    volumes:
+      - "{{ appdata_path }}/apps/copyparty/config:/config:ro"
+      - "{{ copyparty_data_path }}:/w"
+    depends_on:
+      - copyparty-ts
+    network_mode: service:copyparty-ts
+    restart: unless-stopped

@@ -1,0 +1,62 @@
+name: Deploy infra-svcs
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Ansible
+        run: pip install ansible-core
+
+      - name: Configure Ansible vault password helper
+        run: |
+          cat > "$RUNNER_TEMP/ansible-vault-pass" <<'EOF'
+          #!/usr/bin/env bash
+          printf '%s' "$VAULT_PASSWORD"
+          EOF
+          chmod 700 "$RUNNER_TEMP/ansible-vault-pass"
+          echo "ANSIBLE_VAULT_PASSWORD_FILE=$RUNNER_TEMP/ansible-vault-pass" >> "$GITHUB_ENV"
+
+      - name: Load Tailscale OAuth credentials from Ansible vault
+        env:
+          VAULT_PASSWORD: ${{ secrets.VAULT_PASSWORD }}
+        run: |
+          ansible-vault view group_vars/secrets.yaml > .vault-secrets
+          printf 'TS_OAUTH_CLIENT_ID=%s\n' "$(awk -F': ' '/^vault_ts_oauth_client_id:/{print $2; exit}' .vault-secrets)" >> "$GITHUB_ENV"
+          printf 'TS_OAUTH_CLIENT_SECRET=%s\n' "$(awk -F': ' '/^vault_ts_oauth_client_secret:/{print $2; exit}' .vault-secrets)" >> "$GITHUB_ENV"
+          rm -f .vault-secrets
+      - name: Validate Tailscale OAuth credentials were loaded
+        run: |
+          test -n "$TS_OAUTH_CLIENT_ID"
+          test -n "$TS_OAUTH_CLIENT_SECRET"
+
+      - name: Join tailnet
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ env.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ env.TS_OAUTH_CLIENT_SECRET }}
+          tags: tag:server
+          ping: infra-svcs.komodo-gecko.ts.net
+
+      - name: Verify Tailscale SSH to infra-svcs
+        run: ssh -o StrictHostKeyChecking=no root@infra-svcs.komodo-gecko.ts.net true
+
+      - name: Deploy compose stack to infra-svcs
+        env:
+          VAULT_PASSWORD: ${{ secrets.VAULT_PASSWORD }}
+        run: ansible-playbook -b playbook.yaml --limit infra-svcs --tags compose

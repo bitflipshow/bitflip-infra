@@ -3,3 +3,11 @@ figurine_name: bf-infra-svcs
 
 # docker-compose-generator expects services/<hostname>; inventory uses FQDN
 docker_compose_hostname: infra-svcs
+docker_compose_generator_deploy: true
+
+# shared paths
+appdata_path: /opt/appdata
+
+# copyparty
+copyparty_data_path: "{{ appdata_path }}/apps/copyparty/data"
+copyparty_permissions: rwmd
