@@ -51,6 +51,17 @@ services:
       - "{{ filebrowser_appdata_path }}/database:/database"
     depends_on:
       - files-ts
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - -q
+        - --spider
+        - http://127.0.0.1:8080/
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     network_mode: service:files-ts
     restart: unless-stopped
 
