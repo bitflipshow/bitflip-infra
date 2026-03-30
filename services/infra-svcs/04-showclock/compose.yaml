@@ -1,0 +1,41 @@
+configs:
+  showclock-ts-serve:
+    content: |
+      {"TCP":{"443":{"HTTPS":true}},
+      "Web":{"$${TS_CERT_DOMAIN}:443":
+          {"Handlers":{"/":
+          {"Proxy":"http://127.0.0.1:3923"}}}},
+      "AllowFunnel":{"$${TS_CERT_DOMAIN}:443":false}}
+
+services:
+  showclock-ts:
+    image: tailscale/tailscale:latest
+    container_name: showclock-ts
+    hostname: showclock
+    environment:
+      - TS_AUTHKEY={{ vault_ts_oauth_client_secret | replace('$', '$$') }}
+      - TS_EXTRA_ARGS=--advertise-tags=tag:server
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_SERVE_CONFIG=/config/serve-config.json
+      - TS_USERSPACE=false
+    volumes:
+      - "{{ appdata_path }}/apps/showclock/ts-state:/var/lib/tailscale"
+    configs:
+      - source: showclock-ts-serve
+        target: /config/serve-config.json
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    restart: unless-stopped
+
+  showclock:
+    image: ghcr.io/fuzzymistborn/showclock:latest
+    container_name: showclock
+    environment:
+      - PORT=3000
+      - DB_PATH=/data/showclock.db
+    volumes:
+      - "{{ appdata_path }}/apps/showclock/data:/data"
+    network_mode: service:showclock-ts
+    restart: unless-stopped
