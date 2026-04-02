@@ -4,7 +4,7 @@ configs:
       {"TCP":{"443":{"HTTPS":true}},
       "Web":{"$${TS_CERT_DOMAIN}:443":
           {"Handlers":{"/":
-          {"Proxy":"http://127.0.0.1:3923"}}}},
+          {"Proxy":"http://127.0.0.1:3000"}}}},
       "AllowFunnel":{"$${TS_CERT_DOMAIN}:443":false}}
 
 services:
@@ -30,7 +30,7 @@ services:
     restart: unless-stopped
 
   showclock:
-    image: ghcr.io/fuzzymistborn/showclock:0.2.2
+    image: ghcr.io/fuzzymistborn/showclock:0.3.0
     container_name: showclock
     environment:
       - PORT=3000
