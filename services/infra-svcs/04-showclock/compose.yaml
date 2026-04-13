@@ -30,7 +30,7 @@ services:
     restart: unless-stopped
 
   showclock:
-    image: ghcr.io/fuzzymistborn/showclock:0.4.0
+    image: ghcr.io/fuzzymistborn/showclock:0.4.1
     container_name: showclock
     environment:
       - PORT=3000
