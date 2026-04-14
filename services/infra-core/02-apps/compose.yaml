@@ -12,7 +12,7 @@ services:
     container_name: hedgedoc-ts
     hostname: hedgedoc
     environment:
-      - TS_AUTHKEY={{ vault_hedgedoc_ts_auth_key | replace('$', '$$') }}
+      #- TS_AUTHKEY={{ vault_hedgedoc_ts_auth_key | replace('$', '$$') }}
       - TS_STATE_DIR=/var/lib/tailscale
       - TS_SERVE_CONFIG=/config/serve-config.json
       - TS_USERSPACE=false

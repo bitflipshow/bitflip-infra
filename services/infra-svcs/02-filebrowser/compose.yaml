@@ -13,7 +13,7 @@ services:
     container_name: files-ts
     hostname: files
     environment:
-      - TS_AUTHKEY={{ vault_ts_oauth_client_secret | replace('$', '$$') }}
+      #- TS_AUTHKEY={{ vault_ts_oauth_client_secret | replace('$', '$$') }}
       - TS_EXTRA_ARGS=--advertise-tags=tag:server
       - TS_STATE_DIR=/var/lib/tailscale
       - TS_SERVE_CONFIG=/config/serve-config.json
