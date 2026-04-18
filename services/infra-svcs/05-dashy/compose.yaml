@@ -1,0 +1,41 @@
+configs:
+  dashy-ts-serve:
+    content: |
+      {"TCP":{"443":{"HTTPS":true}},
+      "Web":{"$${TS_CERT_DOMAIN}:443":
+          {"Handlers":{"/":
+          {"Proxy":"http://127.0.0.1:8080"}}}},
+      "AllowFunnel":{"$${TS_CERT_DOMAIN}:443":false}}
+
+services:
+  dashy-ts:
+    image: tailscale/tailscale:latest
+    container_name: dashy-ts
+    hostname: dashy
+    environment:
+      - TS_AUTHKEY={{ vault_ts_oauth_client_secret | replace('$', '$$') }}
+      - TS_EXTRA_ARGS=--advertise-tags=tag:server
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_SERVE_CONFIG=/config/serve-config.json
+      - TS_USERSPACE=false
+    volumes:
+      - "{{ appdata_path }}/apps/dashy/ts-state:/var/lib/tailscale"
+    configs:
+      - source: dashy-ts-serve
+        target: /config/serve-config.json
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    restart: unless-stopped
+  dashy:
+    image: ghcr.io/lissy93/dashy:3.3.0
+    container_name: dashy
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - "{{ appdata_path }}/apps/dashy/conf.yml:/app/user-data/conf.yml"
+    network_mode: service:dashy-ts
+    restart: unless-stopped
+    depends_on:
+      - dashy-ts
