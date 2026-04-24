@@ -70,7 +70,7 @@ services:
     restart: unless-stopped
 
   outline-redis:
-    image: redis:8.6.1
+    image: redis:8.6.2
     container_name: outline-redis
     restart: unless-stopped
     networks:
