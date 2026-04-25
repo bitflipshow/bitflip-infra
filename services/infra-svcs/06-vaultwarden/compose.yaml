@@ -1,0 +1,58 @@
+configs:
+  vaultwarden-ts-serve:
+    content: |
+      {"TCP":{"443":{"HTTPS":true}},
+      "Web":{"$${TS_CERT_DOMAIN}:443":
+          {"Handlers":{"/":
+          {"Proxy":"http://127.0.0.1:8000"}}}},
+      "AllowFunnel":{"$${TS_CERT_DOMAIN}:443":false}}
+
+services:
+  vaultwarden-ts:
+    image: tailscale/tailscale:latest
+    container_name: vaultwarden-ts
+    hostname: vaultwarden
+    environment:
+      - TS_AUTHKEY={{ vault_ts_oauth_client_secret | replace('$', '$$') }}
+      - TS_EXTRA_ARGS=--advertise-tags=tag:server
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_SERVE_CONFIG=/config/serve-config.json
+      - TS_USERSPACE=false
+    volumes:
+      - "{{ outline_appdata_path }}/ts-state:/var/lib/tailscale"
+    configs:
+      - source: dashy-ts-serve
+        target: /config/serve-config.json
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    restart: unless-stopped
+  vaultwarden:
+    image: vaultwarden/server:1.35.7
+    container_name: vaultwarden
+    network_mode: service:vaultwarden-ts
+    depends_on:
+      - vaultwarden-ts
+    environment:
+      - DOMAIN=https://vaultwarden.komodo-gecko.ts.net
+      - ROCKET_PORT=8000
+      - ADMIN_TOKEN={{ vault_vaultwarden_admin_token }}
+      - DATA_FOLDER=/data
+      - SSO_ENABLED=true
+      - SSO_ONLY=true
+      - SSO_AUTHORITY=https://idp.komodo-gecko.ts.net
+      - SSO_CLIENT_ID={{ vault_vaultwarden_oidc_client_id | replace('$', '$$') }}
+      - SSO_CLIENT_SECRET={{ vault_vaultwarden_oidc_client_secret | replace('$', '$$') }}
+      - SSO_PKCE=true
+      - SSO_CLIENT_CACHE_EXPIRATION=600
+      - SSO_SIGNUPS_MATCH_EMAIL=true
+      # With SSO_ONLY=true, signups are gated by TSIDP  ^`^t but you can lock
+      # this down further after initial setup with SIGNUPS_ALLOWED=false
+      - SIGNUPS_ALLOWED=true
+      - SSO_ALLOW_UNKNOWN_EMAIL_VERIFICATION=true
+      - SSO_AUTH_ONLY_NOT_SESSION=true
+    volumes:
+      - "{{ outline_appdata_path }}/data:/data"
+    restart: unless-stopped
+
