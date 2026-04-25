@@ -7,13 +7,3 @@ docker_compose_hostname: infra-core
 # shared paths
 appdata_path: /opt/appdata
 
-# hedgedoc
-hedgedoc_domain: hedgedoc.example.ts.net
-hedgedoc_oidc_provider_name: "OIDC"
-hedgedoc_oidc_scope: "openid profile email"
-hedgedoc_oidc_authorization_url: "https://auth.example.com/realms/example/protocol/openid-connect/auth"
-hedgedoc_oidc_token_url: "https://auth.example.com/realms/example/protocol/openid-connect/token"
-hedgedoc_oidc_userinfo_url: "https://auth.example.com/realms/example/protocol/openid-connect/userinfo"
-hedgedoc_oidc_username_attr: "preferred_username"
-hedgedoc_oidc_display_name_attr: "name"
-hedgedoc_oidc_email_attr: "email"
