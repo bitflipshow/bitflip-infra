@@ -19,7 +19,7 @@ services:
       - TS_SERVE_CONFIG=/config/serve-config.json
       - TS_USERSPACE=false
     volumes:
-      - "{{ appdata_path }}/apps/dashy/ts-state:/var/lib/tailscale"
+      - "{{ dashy_appdata_path }}/ts-state:/var/lib/tailscale"
     configs:
       - source: dashy-ts-serve
         target: /config/serve-config.json
@@ -34,7 +34,7 @@ services:
     environment:
       - NODE_ENV=production
     volumes:
-      - "{{ appdata_path }}/apps/dashy/conf.yml:/app/user-data/conf.yml"
+      - "{{ dashy_appdata_path }}/conf.yml:/app/user-data/conf.yml"
     network_mode: service:dashy-ts
     restart: unless-stopped
     depends_on:

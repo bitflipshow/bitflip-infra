@@ -30,3 +30,13 @@ filebrowser_data_path: /mnt/bitflip/data
 # outline
 outline_domain: outline.komodo-gecko.ts.net
 outline_appdata_path: "{{ appdata_path }}/apps/outline"
+
+# showclock
+showclock_appdata_path: "{{ appdata_path }}/apps/showclock"
+
+# dashy
+dashy_appdata_path: "{{ appdata_path }}/apps/dashy"
+
+# vaultwarden
+vaultwarden_domain: vaultwarden.komodo-gecko.ts.net
+vaultwarden_appdata_path: "{{ appdata_path }}/apps/vaultwarden"
