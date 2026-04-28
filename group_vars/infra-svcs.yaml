@@ -40,3 +40,6 @@ dashy_appdata_path: "{{ appdata_path }}/apps/dashy"
 # vaultwarden
 vaultwarden_domain: vaultwarden.komodo-gecko.ts.net
 vaultwarden_appdata_path: "{{ appdata_path }}/apps/vaultwarden"
+
+# kasm
+kasm_appdata_path: "{{ appdata_path }}/apps/kasm"
