@@ -1,7 +1,6 @@
 configs:
   kasm-ts-serve:
-    content: |
-      {"TCP":{"443":{"TCPForward":"127.0.0.1:443"}}}
+    content: '{"TCP":{"443":{"TCPForward":"127.0.0.1:4443"}}}'
 
 services:
   kasm-ts:
@@ -30,9 +29,9 @@ services:
     network_mode: service:kasm-ts
     privileged: true
     volumes:
-      - "{{ kasm_appdata_path }}/config:/config"
+      - "{{ kasm_appdata_path }}/data:/opt"
     environment:
-      - KASM_PORT=443
+      - KASM_PORT=4443
     shm_size: "2gb"
     restart: unless-stopped
     depends_on:
