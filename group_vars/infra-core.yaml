@@ -1,9 +1,0 @@
-# ironicbadger.figurine
-figurine_name: bf-infra-core
-
-# docker-compose-generator expects services/<hostname>; inventory uses FQDN
-docker_compose_hostname: infra-core
-
-# shared paths
-appdata_path: /opt/appdata
-
