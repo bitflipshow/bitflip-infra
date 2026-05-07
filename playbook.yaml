@@ -7,52 +7,34 @@
     - role: ironicbadger.docker-compose-generator
       tags: compose
   tasks:
-    - name: Migrate legacy Outline appdata into managed appdata path
-      shell: |
-        set -eu
-        install -d -m 0755 "$(dirname "{{ outline_appdata_path }}")"
-        if [ -d /root/apps/outline ] && [ ! -e "{{ outline_appdata_path }}" ]; then
-          mv /root/apps/outline "{{ outline_appdata_path }}"
-          echo moved
-        fi
-      args:
-        executable: /bin/sh
-      register: outline_appdata_migration
-      changed_when: "'moved' in outline_appdata_migration.stdout"
-      when: outline_appdata_path is defined
-      tags:
-        - compose
-
-    - name: Apply rendered compose stack
-      command:
-        argv:
-          - docker
-          - compose
-          - -f
-          - "{{ docker_compose_generator_output_path }}/compose.yaml"
-          - up
-          - -d
-          - --remove-orphans
-      register: infra_svcs_compose_apply
-      changed_when: >-
-        'Creating' in infra_svcs_compose_apply.stdout or
-        'Created' in infra_svcs_compose_apply.stdout or
-        'Recreating' in infra_svcs_compose_apply.stdout or
-        'Starting' in infra_svcs_compose_apply.stdout or
-        'Started' in infra_svcs_compose_apply.stdout or
-        'Removing' in infra_svcs_compose_apply.stdout
+    - name: Deploy rendered compose stack
       when: docker_compose_generator_deploy | default(false)
       tags:
         - compose
+      block:
+        - name: Apply compose stack
+          command:
+            argv:
+              - docker
+              - compose
+              - -f
+              - "{{ docker_compose_generator_output_path }}/compose.yaml"
+              - up
+              - -d
+              - --remove-orphans
+          register: infra_svcs_compose_apply
+          changed_when: >-
+            infra_svcs_compose_apply.stdout is search(
+              'Creating|Created|Recreating|Starting|Started|Removing'
+            )
 
-    - name: Prune all unused images
-      command:
-        argv:
-          - docker
-          - image
-          - prune
-          - -a
-          - -f
-      when: docker_compose_generator_deploy | default(false)
-      tags:
-        - compose
+        - name: Prune unused Docker images
+          command:
+            argv:
+              - docker
+              - image
+              - prune
+              - --all
+              - --force
+          register: infra_svcs_image_prune
+          changed_when: "'Deleted Images:' in infra_svcs_image_prune.stdout"
