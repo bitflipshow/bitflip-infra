@@ -1,0 +1,14 @@
+services:
+  tsidp:
+    container_name: tsidp
+    image: ghcr.io/tailscale/tsidp:latest
+    restart: unless-stopped
+    user: "0:0"
+    volumes:
+      - "{{ appdata_path }}/tsidp-data:/data"
+    environment:
+      - TAILSCALE_USE_WIP_CODE=1
+      - TS_STATE_DIR=/data
+      - TS_HOSTNAME=idp
+      - TSIDP_ENABLE_STS=1
+      #- TS_AUTHKEY={{ vault_tsidp_auth_key }}
