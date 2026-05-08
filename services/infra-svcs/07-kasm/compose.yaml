@@ -30,6 +30,7 @@ services:
     privileged: true
     volumes:
       - "{{ kasm_appdata_path }}/data:/opt"
+      - "{{ kasm_appdata_path }}/profiles:/profiles"
     environment:
       - KASM_PORT=4443
     shm_size: "2gb"
