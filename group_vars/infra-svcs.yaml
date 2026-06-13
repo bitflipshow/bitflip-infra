@@ -50,3 +50,6 @@ kasm_appdata_path: "{{ appdata_path }}/apps/kasm"
 # podbooth/livekit
 podbooth_appdata_path: "{{ appdata_path }}/apps/podbooth"
 livekit_appdata_path: "{{ appdata_path }}/apps/livekit"
+
+# dockhand
+dockhand_appdata_path: "{{ appdata_path }}/apps/dockhand"
