@@ -9,6 +9,9 @@ docker_compose_generator_output_path: /opt
 # shared paths
 appdata_path: /opt/appdata
 
+# TZ
+TZ: America/New_York
+
 # copyparty
 copyparty_data_path: "{{ appdata_path }}/apps/copyparty/data"
 copyparty_permissions: rwmd
@@ -43,3 +46,7 @@ vaultwarden_appdata_path: "{{ appdata_path }}/apps/vaultwarden"
 
 # kasm
 kasm_appdata_path: "{{ appdata_path }}/apps/kasm"
+
+# podbooth/livekit
+podbooth_appdata_path: "{{ appdata_path }}/apps/podbooth"
+livekit_appdata_path: "{{ appdata_path }}/apps/livekit"

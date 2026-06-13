@@ -1,0 +1,86 @@
+configs:
+  podbooth-ts-serve:
+    content: "{\"TCP\":{\"443\":{\"HTTPS\":true}},\n\"Web\":{\"$${TS_CERT_DOMAIN}:443\":\n
+      \   {\"Handlers\":{\"/\":\n    {\"Proxy\":\"http://127.0.0.1:8000\"}}}},\n\"AllowFunnel\":{\"$${TS_CERT_DOMAIN}:443\":false}}\n"
+  livekit-ts-serve:
+    content: "{\"TCP\":{\"443\":{\"HTTPS\":true}},\n\"Web\":{\"$${TS_CERT_DOMAIN}:443\":\n
+      \   {\"Handlers\":{\"/\":\n    {\"Proxy\":\"http://127.0.0.1:7880\"}}}},\n\"AllowFunnel\":{\"$${TS_CERT_DOMAIN}:443\":false}}\n"
+
+services:
+  podbooth:
+    image: ghcr.io/fuzzymistborn/podbooth:0.0.1
+    container_name: podbooth-app
+    restart: unless-stopped
+    network_mode: service:podbooth-ts
+    depends_on:
+      - podbooth-ts
+    volumes:
+      - "{{ podbooth_appdata_path }}/recordings:/recordings"
+    environment:
+    # LiveKit — must match the keys block in livekit/livekit.yaml
+      - LIVEKIT_API_KEY={{ vault_livekit_api_key | replace('$', '$$') }}
+      - LIVEKIT_API_SECRET={{ vault_livekit_api_secret | replace('$', '$$') }}
+    # Internal service URL — keep this as-is when using the compose stack
+      - LIVEKIT_URL=ws://livekit:7880
+    # Public WebSocket URL that browsers connect to
+      - LIVEKIT_PUBLIC_URL=wss://livekit.komodo-gecko.ts.net
+    # App settings
+      - SECRET_KEY={{ vault_podbooth_api_key | replace('$', '$$') }}
+      - BASE_URL=https://podbooth.komodo-gecko.ts.net
+      - RECORDINGS_DIR=/recordings
+      - TZ={{ TZ }}
+    # Uncomment to require a password for the host UI:
+    #  - HOST_PASSWORD=your-password
+
+  podbooth-ts:
+    image: tailscale/tailscale:latest
+    container_name: podbooth-ts
+    hostname: podbooth
+    environment:
+#      - TS_AUTHKEY={{ vault_ts_oauth_client_secret | replace('$', '$$') }}
+      - TS_EXTRA_ARGS=--advertise-tags=tag:server
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_SERVE_CONFIG=/config/serve-config.json
+      - TS_USERSPACE=false
+    volumes:
+      - "{{ podbooth_appdata_path }}/ts-state:/var/lib/tailscale"
+    configs:
+      - source: podbooth-ts-serve
+        target: /config/serve-config.json
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    restart: unless-stopped
+
+  livekit:
+    image: livekit/livekit-server:v1.13
+    container_name: podbooth-livekit
+    restart: unless-stopped
+    network_mode: service:livekit-ts
+    depends_on:
+      - livekit-ts
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
+    volumes:
+      - "{{ livekit_appdata_path }}/config/livekit.yaml:/livekit.yaml
+
+  livekit-ts:
+    image: tailscale/tailscale:latest
+    container_name: livekit-ts
+    hostname: livekit
+    environment:
+#      - TS_AUTHKEY={{ vault_ts_oauth_client_secret | replace('$', '$$') }}
+      - TS_EXTRA_ARGS=--advertise-tags=tag:server
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_SERVE_CONFIG=/config/serve-config.json
+      - TS_USERSPACE=false
+    volumes:
+      - "{{ livekit_appdata_path }}/ts-state:/var/lib/tailscale"
+    configs:
+      - source: livekit-ts-serve
+        target: /config/serve-config.json
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    restart: unless-stopped
