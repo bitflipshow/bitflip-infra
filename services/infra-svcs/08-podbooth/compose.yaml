@@ -63,12 +63,13 @@ services:
 
   livekit:
     image: livekit/livekit-server:v1.13
-    container_name: podbooth-livekit
+    container_name: livekit
     restart: unless-stopped
     network_mode: service:livekit-ts
     depends_on:
       - livekit-ts
-    entrypoint: ["/bin/sh", "/entrypoint.sh"]
+    entrypoint: ["/livekit-server"]
+    command: ["--config", "/livekit.yaml"]
     volumes:
       - "{{ livekit_appdata_path }}/config/livekit.yaml:/livekit.yaml"
 
