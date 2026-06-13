@@ -70,7 +70,7 @@ services:
       - livekit-ts
     entrypoint: ["/bin/sh", "/entrypoint.sh"]
     volumes:
-      - "{{ livekit_appdata_path }}/config/livekit.yaml:/livekit.yaml
+      - "{{ livekit_appdata_path }}/config/livekit.yaml:/livekit.yaml"
 
   livekit-ts:
     image: tailscale/tailscale:latest
