@@ -16,12 +16,13 @@ configs:
 
 services:
   podbooth:
-    image: ghcr.io/fuzzymistborn/podbooth:0.0.1
+    image: ghcr.io/fuzzymistborn/podbooth:0.2.0
     container_name: podbooth-app
     restart: unless-stopped
     network_mode: service:podbooth-ts
     depends_on:
       - podbooth-ts
+      - livekit
     volumes:
       - "{{ podbooth_appdata_path }}/recordings:/recordings"
     environment:
