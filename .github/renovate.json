@@ -9,11 +9,19 @@
     "config:recommended"
   ],
   "enabledManagers": ["docker-compose"],
+  "timezone": "America/New_York",
+  "schedule": ["* 0-3 * * 1,5"],
   "packageRules": [
     {
       "matchManagers": ["docker-compose"],
       "matchPackageNames": ["postgres", "redis"],
       "enabled": false
+    },
+    {
+      "description": "Group all non-major updates into a single PR",
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "groupName": "all non-major dependencies",
+      "groupSlug": "all-minor-patch"
     }
   ]
 }
