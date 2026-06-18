@@ -10,7 +10,7 @@
   ],
   "enabledManagers": ["docker-compose"],
   "timezone": "America/New_York",
-  "schedule": ["* 0-3 * * 1,5"],
+  "schedule": ["before 4am on monday", "before 4am on friday"],
   "packageRules": [
     {
       "matchManagers": ["docker-compose"],
