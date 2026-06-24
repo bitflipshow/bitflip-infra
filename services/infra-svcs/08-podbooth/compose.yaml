@@ -16,7 +16,7 @@ configs:
 
 services:
   podbooth:
-    image: ghcr.io/fuzzymistborn/podbooth:0.6.1
+    image: ghcr.io/fuzzymistborn/podbooth:0.7.0
     container_name: podbooth-app
     restart: unless-stopped
     network_mode: service:podbooth-ts
@@ -47,6 +47,8 @@ services:
       - R2_BUCKET=recorded-files
       - EDITOR_PORTAL_URL={{ vault_podbooth_portal_url | replace('$', '$$') }}
       - DISCORD_WEBHOOK_URL={{ vault_podbooth_webhook_url | replace('$', '$$') }}
+      - OUTLINE_API_URL=https://outline.komodo-gecko.ts.net
+      - OUTLINE_API_KEY={{ vault_podbooth_outline_api | replace('$', '$$') }}
     # Uncomment to require a password for the host UI:
     #  - HOST_PASSWORD=your-password
 
