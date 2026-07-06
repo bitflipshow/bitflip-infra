@@ -30,7 +30,7 @@ services:
     restart: unless-stopped
 
   filebrowser:
-    image: filebrowser/filebrowser:v2.63.17
+    image: filebrowser/filebrowser:v2.63.18
     container_name: filebrowser
     user: "0:0"
     command:
