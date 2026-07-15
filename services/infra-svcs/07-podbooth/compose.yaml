@@ -16,7 +16,7 @@ configs:
 
 services:
   podbooth:
-    image: ghcr.io/fuzzymistborn/podbooth:0.9.0
+    image: ghcr.io/fuzzymistborn/podbooth:0.10.0
     container_name: podbooth-app
     restart: unless-stopped
     network_mode: service:podbooth-ts
@@ -40,13 +40,20 @@ services:
       - WHISPERX_API_URL=http://100.88.226.21:8000
       - TZ={{ TZ }}
       - LOG_LEVEL=warning
-    # Cloud Storage
+      - RETENTION_DAYS=10
+    # Cloud Storage (R2)
       - R2_ACCOUNT_ID={{ vault_podbooth_r2_account | replace('$', '$$') }}
       - R2_ACCESS_KEY_ID={{ vault_podbooth_r2_key_id | replace('$', '$$') }}
       - R2_ACCESS_KEY_SECRET={{ vault_podbooth_r2_key_secret | replace('$', '$$') }}
       - R2_BUCKET=recorded-files
+    # Cloud Storage (FileBrowser)
+      - FILEBROWSER_URL=http://100.104.240.5:8080
+      - FILEBROWSER_USER=production
+      - FILEBROWSER_PASSWORD={{ vault_podbooth_fb_password | replace('$', '$$') }}
+    # Editor
       - EDITOR_PORTAL_URL={{ vault_podbooth_portal_url | replace('$', '$$') }}
       - DISCORD_WEBHOOK_URL={{ vault_podbooth_webhook_url | replace('$', '$$') }}
+    # Outline
       - OUTLINE_API_URL=https://outline.komodo-gecko.ts.net
       - OUTLINE_API_KEY={{ vault_podbooth_outline_api | replace('$', '$$') }}
     # Uncomment to require a password for the host UI:
