@@ -16,7 +16,7 @@ configs:
 
 services:
   podbooth:
-    image: ghcr.io/fuzzymistborn/podbooth:0.12.0
+    image: ghcr.io/fuzzymistborn/podbooth:0.12.1
     container_name: podbooth-app
     restart: unless-stopped
     network_mode: service:podbooth-ts

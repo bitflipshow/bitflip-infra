@@ -9,7 +9,7 @@ configs:
 
 services:
   dockhand:
-    image: fnsys/dockhand:v1.0.40
+    image: fnsys/dockhand:v1.0.42
     container_name: dockhand
     restart: unless-stopped
     network_mode: service:dockhand-ts
