@@ -35,7 +35,7 @@ services:
       - outline-net
 
   outline:
-    image: outlinewiki/outline:1.9.2
+    image: outlinewiki/outline:1.10.0
     container_name: outline
     volumes:
       - "{{ outline_appdata_path }}/data:/var/lib/outline/data"
@@ -77,7 +77,7 @@ services:
       - outline-net
 
   outline-db:
-    image: pgautoupgrade/pgautoupgrade:18.4-alpine
+    image: pgautoupgrade/pgautoupgrade:18.6-alpine
     container_name: outline-db
     volumes:
       - "{{ outline_appdata_path }}/postgres:/var/lib/postgresql"
