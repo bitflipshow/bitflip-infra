@@ -35,7 +35,7 @@ services:
       - outline-net
 
   outline:
-    image: outlinewiki/outline:1.10.0
+    image: outlinewiki/outline:1.10.1
     container_name: outline
     volumes:
       - "{{ outline_appdata_path }}/data:/var/lib/outline/data"
