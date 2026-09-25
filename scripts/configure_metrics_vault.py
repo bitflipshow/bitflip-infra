@@ -5,7 +5,7 @@ from pathlib import Path
 import subprocess
 import yaml
 
-required = {'vault_metrics_admin_password', 'vault_metrics_hash_secret',
+required = {'vault_metrics_hash_secret',
             'vault_metrics_r2_account_id', 'vault_metrics_r2_access_key_id',
             'vault_metrics_r2_secret_access_key'}
 values = json.loads(os.environ['METRICS_BOOTSTRAP_JSON'])
@@ -39,4 +39,4 @@ verified = yaml.safe_load(vault(['view', str(output)]))
 if any(verified.get(k) != v for k, v in {**existing, **values}.items()):
     output.unlink()
     raise SystemExit('Vault verification failed')
-print('Verified encrypted vault contains all previous values and the five metrics fields.')
+print('Verified encrypted vault contains all previous values and the required metrics fields.')
