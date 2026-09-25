@@ -5,9 +5,46 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      configure_metrics_only:
+        description: Encrypt staged metrics credentials without deploying services
+        type: boolean
+        default: false
 
 jobs:
+  configure-metrics:
+    if: github.event_name == 'workflow_dispatch' && inputs.configure_metrics_only
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: pip install ansible-core
+      - name: Configure vault helper
+        run: |
+          cat > "$RUNNER_TEMP/ansible-vault-pass" <<'EOF'
+          #!/usr/bin/env bash
+          printf '%s' "$VAULT_PASSWORD"
+          EOF
+          chmod 700 "$RUNNER_TEMP/ansible-vault-pass"
+          echo "ANSIBLE_VAULT_PASSWORD_FILE=$RUNNER_TEMP/ansible-vault-pass" >> "$GITHUB_ENV"
+      - name: Encrypt metrics configuration
+        env:
+          VAULT_PASSWORD: ${{ secrets.VAULT_PASSWORD }}
+          METRICS_BOOTSTRAP_JSON: ${{ secrets.METRICS_BOOTSTRAP_JSON }}
+        run: python scripts/configure_metrics_vault.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: metrics-vault
+          path: metrics-vault.yaml
+          retention-days: 7
+          if-no-files-found: error
+
   deploy:
+    if: github.event_name != 'workflow_dispatch' || !inputs.configure_metrics_only
     runs-on: ubuntu-latest
     permissions:
       contents: read
