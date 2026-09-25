@@ -53,3 +53,8 @@ livekit_appdata_path: "{{ appdata_path }}/apps/livekit"
 
 # dockhand
 dockhand_appdata_path: "{{ appdata_path }}/apps/dockhand"
+
+# podcast metrics
+metrics_appdata_path: "{{ appdata_path }}/apps/metrics"
+metrics_domain: metrics.komodo-gecko.ts.net
+bitflip_site_ref: main

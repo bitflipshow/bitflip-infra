@@ -12,6 +12,27 @@
       tags:
         - compose
       block:
+        - name: Create source checkout directory
+          ansible.builtin.file:
+            path: /opt/src
+            state: directory
+            mode: "0755"
+
+        - name: Check out analytics source
+          ansible.builtin.git:
+            repo: https://github.com/bitflipshow/bitflip-site.git
+            dest: /opt/src/bitflip-site
+            version: "{{ bitflip_site_ref }}"
+            update: true
+
+        - name: Create metrics data directory
+          ansible.builtin.file:
+            path: "{{ metrics_appdata_path }}/data"
+            state: directory
+            owner: "10001"
+            group: "10001"
+            mode: "0750"
+
         - name: Apply compose stack
           command:
             argv:
@@ -21,12 +42,47 @@
               - "{{ docker_compose_generator_output_path }}/compose.yaml"
               - up
               - -d
+              - --build
               - --remove-orphans
           register: infra_svcs_compose_apply
           changed_when: >-
             infra_svcs_compose_apply.stdout is search(
               'Creating|Created|Recreating|Starting|Started|Removing'
             )
+
+        - name: Read Dashy configuration
+          ansible.builtin.slurp:
+            src: "{{ dashy_appdata_path }}/conf.yml"
+          register: dashy_conf_file
+
+        - name: Decode Dashy configuration
+          ansible.builtin.set_fact:
+            dashy_conf: "{{ dashy_conf_file.content | b64decode | from_yaml }}"
+
+        - name: Add podcast metrics to Dashy
+          ansible.builtin.copy:
+            dest: "{{ dashy_appdata_path }}/conf.yml"
+            backup: true
+            mode: "0644"
+            content: >-
+              {{ dashy_conf | combine({'sections':
+                 (dashy_conf.sections | default([]) | rejectattr('name', 'equalto', 'BitFlip metrics') | list)
+                 + [{'name': 'BitFlip metrics', 'items':
+                     [{'title': 'Podcast analytics', 'url': 'https://' ~ metrics_domain,
+                       'description': 'Downloads, Spotify and YouTube'}]}]}, recursive=True)
+                 | to_nice_yaml(indent=2, sort_keys=false) }}
+          register: dashy_metrics_config
+
+        - name: Reload Dashy after configuration change
+          ansible.builtin.command:
+            argv:
+              - docker
+              - compose
+              - -f
+              - "{{ docker_compose_generator_output_path }}/compose.yaml"
+              - restart
+              - dashy
+          when: dashy_metrics_config.changed
 
         - name: Prune unused Docker images
           command:
