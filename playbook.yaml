@@ -50,14 +50,27 @@
               'Creating|Created|Recreating|Starting|Started|Removing'
             )
 
+        # On a fresh host conf.yml may be absent (or a directory Docker created for the bind mount).
+        - name: Check Dashy configuration
+          ansible.builtin.stat:
+            path: "{{ dashy_appdata_path }}/conf.yml"
+          register: dashy_conf_stat
+
+        - name: Report skipped Dashy link
+          ansible.builtin.debug:
+            msg: "{{ dashy_appdata_path }}/conf.yml is not a file; skipping the podcast metrics Dashy link."
+          when: not (dashy_conf_stat.stat.isreg | default(false))
+
         - name: Read Dashy configuration
           ansible.builtin.slurp:
             src: "{{ dashy_appdata_path }}/conf.yml"
           register: dashy_conf_file
+          when: dashy_conf_stat.stat.isreg | default(false)
 
         - name: Decode Dashy configuration
           ansible.builtin.set_fact:
-            dashy_conf: "{{ dashy_conf_file.content | b64decode | from_yaml }}"
+            dashy_conf: "{{ (dashy_conf_file.content | b64decode | from_yaml) or {} }}"
+          when: dashy_conf_stat.stat.isreg | default(false)
 
         - name: Add podcast metrics to Dashy
           ansible.builtin.copy:
@@ -72,6 +85,7 @@
                        'description': 'Downloads, Spotify and YouTube'}]}]}, recursive=True)
                  | to_nice_yaml(indent=2, sort_keys=false) }}
           register: dashy_metrics_config
+          when: dashy_conf_stat.stat.isreg | default(false)
 
         - name: Reload Dashy after configuration change
           ansible.builtin.command:
@@ -82,7 +96,7 @@
               - "{{ docker_compose_generator_output_path }}/compose.yaml"
               - restart
               - dashy
-          when: dashy_metrics_config.changed
+          when: dashy_metrics_config is changed
 
         - name: Prune unused Docker images
           command:
