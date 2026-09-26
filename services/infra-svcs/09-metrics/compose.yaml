@@ -49,6 +49,7 @@ services:
       - "{{ metrics_appdata_path }}/data:/data"
     environment:
       - DB_PATH=/data/analytics.sqlite3
+      - BIND_HOST=127.0.0.1
       - MANIFEST_URL=https://bitflip.show/analytics-manifest.json
       - HASH_SECRET={{ vault_metrics_hash_secret | replace('$', '$$') }}
       - R2_ACCOUNT_ID={{ vault_metrics_r2_account_id }}
@@ -58,3 +59,4 @@ services:
       - YOUTUBE_CLIENT_ID={{ vault_metrics_youtube_client_id | default('') }}
       - YOUTUBE_CLIENT_SECRET={{ vault_metrics_youtube_client_secret | default('') | replace('$', '$$') }}
       - YOUTUBE_REFRESH_TOKEN={{ vault_metrics_youtube_refresh_token | default('') | replace('$', '$$') }}
+      - ALERT_WEBHOOK_URL={{ vault_metrics_alert_webhook_url | default('') | replace('$', '$$') }}
