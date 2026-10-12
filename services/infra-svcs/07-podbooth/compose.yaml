@@ -29,8 +29,11 @@ services:
     # LiveKit — must match the keys block in livekit/livekit.yaml
       - LIVEKIT_API_KEY={{ vault_livekit_api_key | replace('$', '$$') }}
       - LIVEKIT_API_SECRET={{ vault_livekit_api_secret | replace('$', '$$') }}
-    # Internal service URL — keep this as-is when using the compose stack
-      - LIVEKIT_URL=ws://livekit:7880
+    # Server-side LiveKit API (e.g. removing a guest from the call). The app
+    # runs in podbooth-ts's network, where the name "livekit" doesn't resolve
+    # (livekit has no network of its own — it shares livekit-ts's), so use
+    # livekit-ts's tailnet IP.
+      - LIVEKIT_URL=http://100.86.223.92:7880
     # Public WebSocket URL that browsers connect to
       - LIVEKIT_PUBLIC_URL=wss://livekit.komodo-gecko.ts.net
     # App settings
@@ -88,9 +91,24 @@ services:
     restart: unless-stopped
     network_mode: service:livekit-ts
     depends_on:
-      - livekit-ts
-    entrypoint: ["/livekit-server"]
-    command: ["--config", "/livekit.yaml"]
+      livekit-ts:
+        condition: service_healthy
+        restart: true
+    # LiveKit picks the addresses it uses for calls when it starts. If it
+    # starts before livekit-ts has its tailnet IPv6 (fd7a:…), it never uses
+    # it and video fails for everyone until LiveKit is restarted. Wait for
+    # the address first — this also covers host reboots, where Docker
+    # starts containers without honouring depends_on.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        until ip -6 addr show dev tailscale0 2>/dev/null | grep -q 'inet6 fd7a:'; do
+          echo "waiting for tailnet IPv6 on tailscale0"
+          sleep 2
+        done
+        exec /livekit-server --config /livekit.yaml
+    command: []
     volumes:
       - "{{ livekit_appdata_path }}/config/livekit.yaml:/livekit.yaml"
 
@@ -114,3 +132,11 @@ services:
     devices:
       - /dev/net/tun
     restart: unless-stopped
+    # Healthy only once the tailnet IPv6 is on the interface — see the
+    # comment on livekit's entrypoint.
+    healthcheck:
+      test: ["CMD-SHELL", "ip -6 addr show dev tailscale0 | grep -q 'inet6 fd7a:'"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
