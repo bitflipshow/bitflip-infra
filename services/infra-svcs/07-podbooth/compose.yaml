@@ -16,7 +16,7 @@ configs:
 
 services:
   podbooth:
-    image: ghcr.io/fuzzymistborn/podbooth:0.15.0
+    image: ghcr.io/fuzzymistborn/podbooth:0.15.1
     container_name: podbooth-app
     restart: unless-stopped
     network_mode: service:podbooth-ts
@@ -40,7 +40,7 @@ services:
       - SECRET_KEY={{ vault_podbooth_secret_key | replace('$', '$$') }}
       - BASE_URL=https://podbooth.komodo-gecko.ts.net
       - RECORDINGS_DIR=/recordings
-      - WHISPERX_API_URL=http://100.88.226.21:8000
+      - WHISPERX_API_URL=http://100.88.95.2:8200
       - TZ={{ TZ }}
       - LOG_LEVEL=warning
       - RETENTION_DAYS=10
