@@ -79,17 +79,24 @@ jobs:
           echo "ANSIBLE_VAULT_PASSWORD_FILE=$RUNNER_TEMP/ansible-vault-pass" >> "$GITHUB_ENV"
 
       - name: Load Tailscale OAuth credentials from Ansible vault
+        shell: bash
         env:
           VAULT_PASSWORD: ${{ secrets.VAULT_PASSWORD }}
         run: |
-          ansible-vault view group_vars/secrets.yaml > .vault-secrets
-          printf 'TS_OAUTH_CLIENT_ID=%s\n' "$(awk -F': ' '/^vault_ts_oauth_client_id:/{print $2; exit}' .vault-secrets)" >> "$GITHUB_ENV"
-          printf 'TS_OAUTH_CLIENT_SECRET=%s\n' "$(awk -F': ' '/^vault_ts_oauth_client_secret:/{print $2; exit}' .vault-secrets)" >> "$GITHUB_ENV"
-          rm -f .vault-secrets
-      - name: Validate Tailscale OAuth credentials were loaded
-        run: |
-          test -n "$TS_OAUTH_CLIENT_ID"
-          test -n "$TS_OAUTH_CLIENT_SECRET"
+          vault_contents=$(ansible-vault view group_vars/secrets.yaml)
+          client_id=$(awk -F': ' '/^vault_ts_oauth_client_id:/{print $2; exit}' <<< "$vault_contents")
+          client_secret=$(awk -F': ' '/^vault_ts_oauth_client_secret:/{print $2; exit}' <<< "$vault_contents")
+          if [[ -z "$client_id" || -z "$client_secret" ]]; then
+            echo '::error::Tailscale OAuth credentials are missing from Ansible Vault'
+            exit 1
+          fi
+
+          # Vault values are not automatically masked by GitHub Actions.
+          printf '::add-mask::%s\n' "$client_id" "$client_secret"
+          {
+            printf 'TS_OAUTH_CLIENT_ID=%s\n' "$client_id"
+            printf 'TS_OAUTH_CLIENT_SECRET=%s\n' "$client_secret"
+          } >> "$GITHUB_ENV"
 
       - name: Join tailnet
         uses: tailscale/github-action@v4
