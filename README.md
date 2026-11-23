@@ -12,6 +12,8 @@ This repo uses [`ironicbadger/ansible-role-docker-compose-generator`](https://gi
 - To change a service, edit its `compose.yaml` and any config files in the same directory.
 - Put shared settings in [`group_vars/infra-svcs.yaml`](group_vars/infra-svcs.yaml) and keep secrets in Ansible Vault.
 
+We use `just` to codify the most common things you might want to do with this repo. For example adding or modifying secrets (once you have the `.vault-password` file from Vaultwarden) is as easy as `just vault edit`.
+
 ## Deploy
 
 Commit your changes on a branch, push it, and open a pull request. Merging into `main` automatically deploys to production. A direct push to `main` also triggers a deploy.
